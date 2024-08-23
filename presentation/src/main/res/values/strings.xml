@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Movie Explorer</string>
+    <string name="release_date">Release Date: %s</string>
+    <string name="movie_name">Movie Name:</string>
+    <string name="box_office">Box Office</string>
+    <string name="overview">Overview</string>
+    <string name="no_data">No data available</string>
+    <string name="upcoming_movies">Upcoming Movies</string>
+</resources>
