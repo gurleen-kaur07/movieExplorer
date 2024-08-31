@@ -1,6 +1,7 @@
 package com.android.data.di
 
 import android.content.Context
+import com.android.data.source.local.AppDatabase
 import com.android.data.source.local.dao.MovieDao
 import dagger.Module
 import dagger.Provides
@@ -16,11 +17,11 @@ object DataModule {
     @Singleton
     fun provideDatabase(
         @ApplicationContext context: Context,
-    ): com.android.data.source.local.AppDatabase =
-        com.android.data.source.local.AppDatabase.Companion
-            .getDatabase(context)
+    ): AppDatabase =
+        AppDatabase.getDatabase(context)
 
     @Provides
     @Singleton
-    fun provideDao(database: com.android.data.source.local.AppDatabase): MovieDao = database.movieDao()
+    fun provideDao(database: AppDatabase): MovieDao =
+        database.movieDao()
 }

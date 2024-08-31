@@ -5,9 +5,5 @@ sealed class AppEffect {
         val message: String,
     ) : AppEffect()
 
-    object NONE : AppEffect()
-
-    data class NetworkError(
-        val message: String,
-    ) : AppEffect()
+    data object NONE : AppEffect()
 }

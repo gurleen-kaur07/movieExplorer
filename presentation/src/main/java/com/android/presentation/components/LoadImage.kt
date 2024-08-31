@@ -14,11 +14,11 @@ fun LoadImage(
 ) {
     AsyncImage(
         model =
-            ImageRequest
-                .Builder(LocalContext.current)
-                .data(url)
-                .crossfade(true)
-                .build(),
+        ImageRequest
+            .Builder(LocalContext.current)
+            .data(url)
+            .crossfade(true)
+            .build(),
         contentDescription = "Image",
         contentScale = ContentScale.FillBounds,
         modifier = modifier,

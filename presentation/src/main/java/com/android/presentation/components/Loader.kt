@@ -13,9 +13,9 @@ import androidx.compose.ui.Modifier
 fun Loader() {
     Box(
         modifier =
-            Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.onPrimary),
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.onPrimary),
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator()

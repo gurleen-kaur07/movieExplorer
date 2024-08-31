@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
@@ -24,55 +24,55 @@ import java.util.Locale
 
 @Composable
 fun MovieInfo(movie: MovieItem) {
-    val LocalDim = compositionLocalOf { Dimensions() }
+    val localDim = compositionLocalOf { Dimensions }
 
     Column(
-        modifier = Modifier.padding(LocalDim.current.spaceMedium),
+        modifier = Modifier.padding(localDim.current.spaceMedium),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(modifier = Modifier.height(LocalDim.current.spaceLarge))
+        Spacer(modifier = Modifier.height(localDim.current.spaceLarge))
 
         Text(
-            text = movie.title ?: stringResource(id = R.string.box_office),
+            text = movie.title,
             style = MaterialTheme.typography.h5,
             overflow = TextOverflow.Ellipsis,
             modifier =
-                Modifier
-                    .padding(horizontal = LocalDim.current.spaceLarge)
-                    .fillMaxWidth(),
+            Modifier
+                .padding(horizontal = localDim.current.spaceLarge)
+                .fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
 
         Row(
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = LocalDim.current.spaceMedium),
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = localDim.current.spaceMedium),
             horizontalArrangement = Arrangement.Center,
         ) {
             val date =
                 LocalContext.current.getString(
                     R.string.release_date,
-                    movie.releaseDate + " (" + movie.originalLanguage?.uppercase(Locale.ROOT) + ")",
+                    movie.releaseDate + " (" + movie.originalLanguage.uppercase(Locale.ROOT) + ")",
                 )
             Text(
                 text = date,
                 style = MaterialTheme.typography.body1,
                 maxLines = 1,
-                modifier = Modifier.padding(end = LocalDim.current.spaceSmall),
+                modifier = Modifier.padding(end = localDim.current.spaceSmall),
             )
         }
 
-        StarRating(rating = (movie.voteAverage ?: 1.0) / 2)
-        Spacer(modifier = Modifier.height(LocalDim.current.spaceMedium))
+        StarRating(rating = (movie.voteAverage) / 2)
+        Spacer(modifier = Modifier.height(localDim.current.spaceMedium))
         Text(
             text = stringResource(id = R.string.overview),
             style = MaterialTheme.typography.h5,
             maxLines = 1,
         )
-        Spacer(modifier = Modifier.height(LocalDim.current.spaceSmall))
+        Spacer(modifier = Modifier.height(localDim.current.spaceSmall))
         Text(
-            text = movie.overview ?: "",
+            text = movie.overview,
             style = MaterialTheme.typography.body1,
         )
     }

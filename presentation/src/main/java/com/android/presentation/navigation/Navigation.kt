@@ -9,7 +9,7 @@ import androidx.navigation.navArgument
 import com.android.domain.model.MovieItem
 import com.android.presentation.Screen
 import com.android.presentation.details.DetailScreen
-import com.android.presentation.home.HomeScreen
+import com.android.presentation.home.MoviesScreen
 import com.android.presentation.theme.AssignmentApplicationTheme
 
 @Composable
@@ -18,27 +18,27 @@ fun Navigation() {
     AssignmentApplicationTheme {
         NavHost(navController = navController, startDestination = Screen.Dashboard.route) {
             composable(Screen.Dashboard.route) {
-                HomeScreen(
+                MoviesScreen(
                     navController = navController,
-                    onItemClick = { id -> navController.navigate("detail/$id") },
                 )
             }
 
             composable(
                 route = Screen.MovieDetailsScreen.route + "?movieId={movieId}&moviesTitle={moviesTitle}",
                 arguments =
-                    listOf(
-                        navArgument(name = "movieId") {
-                            type = NavType.IntType
-                            defaultValue = 0
-                        },
-                        navArgument(name = "moviesTitle") {
-                            type = NavType.StringType
-                            defaultValue = ""
-                        },
-                    ),
+                listOf(
+                    navArgument(name = "movieId") {
+                        type = NavType.IntType
+                        defaultValue = 0
+                    },
+                    navArgument(name = "moviesTitle") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
             ) {
-                val item: MovieItem? = navController.previousBackStackEntry?.savedStateHandle?.get("movieItem")
+                val item: MovieItem? =
+                    navController.previousBackStackEntry?.savedStateHandle?.get("movieItem")
                 DetailScreen(navController = navController, movie = item)
             }
         }

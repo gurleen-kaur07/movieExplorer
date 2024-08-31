@@ -26,7 +26,7 @@ fun DetailScreen(
     movie: MovieItem?,
     navController: NavHostController,
 ) {
-    val LocalDim = compositionLocalOf { Dimensions() }
+    val localDim = compositionLocalOf { Dimensions }
 
     Scaffold(
         topBar = {
@@ -37,31 +37,31 @@ fun DetailScreen(
     ) { innerPadding ->
         Box(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.onPrimary),
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.onPrimary),
         ) {
             Column(
                 modifier =
-                    Modifier
-                        .padding(innerPadding),
+                Modifier
+                    .padding(innerPadding),
             ) {
                 LazyColumn(content = {
                     item {
                         LoadImage(
                             url = (
-                                BuildConfig.PREFIX_IMAGE_URL +
-                                    movie?.posterPath
-                            ),
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(LocalDim.current.spaceSmall)
-                                    .clip(
-                                        shape =
-                                            androidx.compose.foundation.shape
-                                                .RoundedCornerShape(LocalDim.current.spaceMedium),
+                                    BuildConfig.PREFIX_IMAGE_URL +
+                                            movie?.posterPath
                                     ),
+                            modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(localDim.current.spaceSmall)
+                                .clip(
+                                    shape =
+                                    androidx.compose.foundation.shape
+                                        .RoundedCornerShape(localDim.current.spaceMedium),
+                                ),
                         )
                     }
                     item {

@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
@@ -30,29 +30,31 @@ fun TopBar(
     title: String,
     onBack: () -> Unit,
 ) {
-    val LocalDim = compositionLocalOf { Dimensions() }
+    val localDim = compositionLocalOf { Dimensions }
+
 
     TopAppBar(
         backgroundColor = Color.White,
-        elevation = LocalDim.current.default,
+        elevation = localDim.current.default,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val iconSize = LocalDim.current.spaceExtraLarge
+            val iconSize = localDim.current.spaceExtraLarge
 
             val icon = if (isBackPressRequired) Icons.Filled.Close else Icons.Default.Home
             Icon(
                 imageVector = icon,
                 contentDescription = "ArrowBack",
                 modifier =
-                    Modifier
-                        .padding(start = LocalDim.current.spaceMedium)
-                        .clickable {
-                            onBack()
-                        }.size(iconSize),
+                Modifier
+                    .padding(start = localDim.current.spaceMedium)
+                    .clickable {
+                        onBack()
+                    }
+                    .size(iconSize),
             )
 
             Text(
@@ -66,9 +68,9 @@ fun TopBar(
             )
             Box(
                 modifier =
-                    Modifier
-                        .padding(end = LocalDim.current.spaceMedium)
-                        .size(iconSize),
+                Modifier
+                    .padding(end = localDim.current.spaceMedium)
+                    .size(iconSize),
             ) { }
         }
     }

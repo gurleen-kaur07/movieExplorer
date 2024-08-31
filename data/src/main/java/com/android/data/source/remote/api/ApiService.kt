@@ -1,6 +1,6 @@
 package com.android.data.source.remote.api
 
-import com.android.domain.model.UpcomingMovieResponse
+import com.android.data.model.UpcomingMovieResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 

@@ -8,7 +8,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.android.presentation.dimen.Dimensions
@@ -18,10 +19,10 @@ fun StarRating(
     rating: Double,
     totalStars: Int = 5,
 ) {
-    val LocalDim = compositionLocalOf { Dimensions() }
+    val localDim = compositionLocalOf { Dimensions }
 
     Row(
-        modifier = Modifier.padding(horizontal = LocalDim.current.spaceSmall),
+        modifier = Modifier.padding(horizontal = localDim.current.spaceSmall),
     ) {
         for (i in 1..totalStars) {
             val starIcon = if (i <= rating) Icons.Filled.Star else Icons.Outlined.Star
@@ -29,8 +30,8 @@ fun StarRating(
                 imageVector = starIcon,
                 contentDescription = null,
                 modifier =
-                    Modifier
-                        .size(LocalDim.current.marginLarge),
+                Modifier
+                    .size(localDim.current.marginLarge),
                 tint = if (i <= rating) MaterialTheme.colorScheme.primary else Color.Gray,
             )
         }

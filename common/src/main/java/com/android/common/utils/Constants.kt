@@ -15,7 +15,5 @@ enum class Pagination(
 enum class DataStates(
     val message: String,
 ) {
-    NO_DATA("Data not available to display"),
     PAGE_END("No more data to load"),
-    ERROR("Failed to load more data"),
 }

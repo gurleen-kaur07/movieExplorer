@@ -48,19 +48,19 @@ object NetworkModule {
                     .also { client ->
                         client.addNetworkInterceptor(clientInterceptor())
                     }.build(),
-            ).baseUrl(com.android.data.BuildConfig.BASE_URL)
+            ).baseUrl(BuildConfig.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
     @Provides
     @Singleton
-    fun provideApiService(retrofit: Retrofit): com.android.data.source.remote.api.ApiService =
+    fun provideApiService(retrofit: Retrofit): ApiService =
         retrofit.create(
             ApiService::class.java,
         )
 
     @Provides
     @Singleton
-    fun provideMovieDetailRepository(apiService: com.android.data.source.remote.api.ApiService): MoviesRepository =
+    fun provideMovieDetailRepository(apiService: ApiService): MoviesRepository =
         MoviesRepositoryImpl(apiService)
 }

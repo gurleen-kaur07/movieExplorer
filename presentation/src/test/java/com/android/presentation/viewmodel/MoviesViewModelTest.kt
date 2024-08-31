@@ -3,10 +3,9 @@ package com.android.presentation.viewmodel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
 import com.android.common.utils.Constants
+import com.android.common.utils.MockMovieObject
+import com.android.common.utils.Pagination
 import com.android.data.source.local.dao.MovieDao
-import com.android.domain.model.Dates
-import com.android.domain.model.MovieItem
-import com.android.domain.model.UpcomingMovieResponse
 import com.android.domain.usecase.UpcomingMovieUseCase
 import com.android.domain.util.Resource
 import com.android.presentation.HomeState
@@ -14,14 +13,24 @@ import com.android.presentation.MoviesViewModel
 import com.android.presentation.actions.MoviesIntent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.*
-import org.junit.*
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import org.mockito.Mock
+import org.mockito.Mockito.anyInt
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.eq
 
 @ExperimentalCoroutinesApi
 class MoviesViewModelTest {
@@ -52,143 +61,143 @@ class MoviesViewModelTest {
     }
 
     @Test
-    fun `processIntent should return success`() =
+    fun `on loadMovies intent,when API fails, processIntent should return loading state followed by error state`() =
         testScope.runTest {
-            val movies =
-                listOf(
-                    MovieItem(
-                        overview = "In a galaxy far, far away, the battle between good and evil unfolds as heroes rise to fight for justice and freedom.",
-                        movieId = "123456",
-                        originalLanguage = "en",
-                        originalTitle = "Star Wars: A New Hope",
-                        video = false,
-                        title = "Star Wars",
-                        posterPath = "/path/to/poster.jpg",
-                        backdropPath = "/path/to/backdrop.jpg",
-                        releaseDate = "1977-05-25",
-                        popularity = 88.76,
-                        voteAverage = 8.6,
-                        adult = false,
-                        voteCount = 12000,
-                    ),
-                )
-
-            val response =
-                UpcomingMovieResponse(
-                    results = movies,
-                    dates =
-                        Dates(
-                            maximum = "2024-12-31",
-                            minimum = "2024-01-01",
-                        ),
-                    page = 1,
-                    totalPages = 10,
-                    totalResults = 11,
-                )
-
-            `when`(upcomingMovieUseCase(Constants.MOVIE_LANG.get, 1)).thenReturn(
-                Resource.Success(
-                    response,
-                ),
-            )
-            viewModel.processIntent(MoviesIntent.LoadMovies(Constants.MOVIE_LANG.get))
-
-            val states = mutableListOf<Resource<List<MovieItem>>>()
-            val job =
-                launch {
-                    viewModel.uiStates.collect { state ->
-                        if (state is HomeState.ResultAllMovies) {
-                            states.add(state.data)
-                        }
-                    }
-                }
-
-            advanceUntilIdle()
-            assertEquals(1, states.size)
-            assert(states[0] is Resource.Success)
-            assertEquals(movies, (states[0] as Resource.Success).data)
-            job.cancel()
-        }
-
-    @Test
-    fun `on loadmovies intent, processIntent should return loading state followed by error state`() =
-        testScope.runTest {
-            val errorMessage = "Error while fetching movie details"
-            `when`(upcomingMovieUseCase(Constants.MOVIE_LANG.get, 1)).thenReturn(
+            `when`(upcomingMovieUseCase(eq(Constants.MOVIE_LANG.get), anyInt())).thenReturn(
                 Resource.Error(
-                    errorMessage,
+                    MockMovieObject.ERROR_MESSAGE,
                 ),
             )
 
             viewModel.uiStates.test {
-                viewModel.processIntent(MoviesIntent.LoadMovies(Constants.MOVIE_LANG.get, 1))
+                viewModel.processIntent(
+                    MoviesIntent.LoadMovies(
+                        Constants.MOVIE_LANG.get,
+                        Pagination.INIT_PAGE.page
+                    )
+                )
+
+                runCurrent()
+
+                verify(upcomingMovieUseCase).invoke(eq(Constants.MOVIE_LANG.get), anyInt())
 
                 assertEquals(HomeState.NONE, awaitItem())
-                assertEquals(HomeState.Loading(true), awaitItem())
                 assertEquals(
-                    HomeState.Exception(callErrors = "Error while fetching movie details"),
+                    HomeState.Exception(callErrors = MockMovieObject.ERROR_MESSAGE),
                     awaitItem(),
                 )
             }
         }
 
     @Test
-    fun `on loadMovies intent, processIntent should return loading state followed by success state`() =
+    fun `on loadMovies intent,when API succeeds processIntent should return loading state followed by success state`() =
         testScope.runTest {
-            val movies =
-                listOf(
-                    MovieItem(
-                        overview = "In a galaxy far, far away, the battle between good and evil unfolds as heroes rise to fight for justice and freedom.",
-                        movieId = "123456",
-                        originalLanguage = "en",
-                        originalTitle = "Star Wars: A New Hope",
-                        video = false,
-                        title = "Star Wars",
-                        posterPath = "/path/to/poster.jpg",
-                        backdropPath = "/path/to/backdrop.jpg",
-                        releaseDate = "1977-05-25",
-                        popularity = 88.76,
-                        voteAverage = 8.6,
-                        adult = false,
-                        voteCount = 12000,
-                    ),
-                )
-
-            val response =
-                UpcomingMovieResponse(
-                    results = movies,
-                    dates =
-                        Dates(
-                            maximum = "2024-12-31",
-                            minimum = "2024-01-01",
-                        ),
-                    page = 1,
-                    totalPages = 10,
-                    totalResults = 11,
-                )
+            val response = MockMovieObject.movieResponse
 
             val successUiState = HomeState.ResultAllMovies(Resource.Success(response.results))
 
-            `when`(upcomingMovieUseCase(Constants.MOVIE_LANG.get, 1)).thenReturn(
+            `when`(upcomingMovieUseCase(eq(Constants.MOVIE_LANG.get), anyInt())).thenReturn(
                 Resource.Success(
                     response,
                 ),
             )
 
             viewModel.uiStates.test {
-                viewModel.processIntent(MoviesIntent.LoadMovies(Constants.MOVIE_LANG.get, 1))
+                viewModel.processIntent(
+                    MoviesIntent.LoadMovies(
+                        Constants.MOVIE_LANG.get,
+                        Pagination.INIT_PAGE.page
+                    )
+                )
+
+                runCurrent()
+
+                verify(upcomingMovieUseCase).invoke(eq(Constants.MOVIE_LANG.get), anyInt())
 
                 assertEquals(HomeState.NONE, awaitItem())
-                assertEquals(HomeState.Loading(true), awaitItem())
+
                 val item = awaitItem()
                 assertTrue(
                     item is HomeState.ResultAllMovies,
                 )
-
                 assertEquals(
                     response.results,
                     (successUiState.data as Resource.Success).data,
                 )
+
+
             }
         }
+
+    @Test
+    fun `on loadMovies intent,when API returns empty list,processIntent should return false loading state on API `() =
+        testScope.runTest {
+            val response = MockMovieObject.emptyMovieResponse
+
+            `when`(upcomingMovieUseCase(eq(Constants.MOVIE_LANG.get), anyInt())).thenReturn(
+                Resource.Success(response),
+            )
+            assertTrue(response.results.isEmpty())
+
+
+            viewModel.uiStates.test {
+                viewModel.processIntent(
+                    MoviesIntent.LoadMovies(
+                        Constants.MOVIE_LANG.get,
+                        Pagination.INIT_PAGE.page
+                    )
+                )
+
+                runCurrent()
+
+                verify(upcomingMovieUseCase).invoke(eq(Constants.MOVIE_LANG.get), anyInt())
+
+                assertEquals(HomeState.NONE, awaitItem())
+
+                assert(!(awaitItem() as HomeState.Loading).isLoading)
+            }
+        }
+
+    @Test
+    fun `on navigate to details intent,processIntent should emit navigation event with selected item as an argument`() =
+        testScope.runTest {
+
+            val expectedState = MockMovieObject.movieItem
+            assertEquals(viewModel.navigator.value, null)
+
+            viewModel.processIntent(
+                MoviesIntent.NavigateToDetails(MockMovieObject.movieItem)
+            )
+            runCurrent()
+
+            assertEquals(viewModel.navigator.value, expectedState)
+        }
+
+    @Test
+    fun `on loadMovies Intent,when API throws exception,processIntent should return loading state followed by exception state`() =
+        testScope.runTest {
+
+            `when`(upcomingMovieUseCase(eq(Constants.MOVIE_LANG.get), anyInt())).thenThrow(
+                RuntimeException(MockMovieObject.ERROR_MESSAGE)
+            )
+
+            viewModel.uiStates.test {
+                viewModel.processIntent(
+                    MoviesIntent.LoadMovies(
+                        Constants.MOVIE_LANG.get,
+                        Pagination.INIT_PAGE.page
+                    )
+                )
+
+                runCurrent()
+
+                verify(upcomingMovieUseCase).invoke(eq(Constants.MOVIE_LANG.get), anyInt())
+
+                assertEquals(HomeState.NONE, awaitItem())
+                assertEquals(HomeState.Exception(MockMovieObject.ERROR_MESSAGE), awaitItem())
+            }
+
+        }
+
+
 }

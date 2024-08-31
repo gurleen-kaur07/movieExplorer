@@ -8,14 +8,10 @@ sealed class HomeState {
         val isLoading: Boolean,
     ) : HomeState()
 
-    object NONE : HomeState()
+    data object NONE : HomeState()
 
     data class ResultAllMovies(
         val data: Resource<List<MovieItem>>,
-    ) : HomeState()
-
-    data class SideEffect(
-        val effects: AppEffect,
     ) : HomeState()
 
     data class Exception(

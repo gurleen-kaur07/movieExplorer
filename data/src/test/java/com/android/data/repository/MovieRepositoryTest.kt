@@ -1,29 +1,36 @@
 package com.android.data.repository
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.android.domain.model.Dates
-import com.android.domain.model.MovieItem
-import com.android.domain.model.UpcomingMovieResponse
+import com.android.common.utils.Constants
+import com.android.common.utils.MockMovieObject
+import com.android.common.utils.Pagination
+import com.android.data.mapper.MovieMapper.toEntityModel
+import com.android.data.source.local.dao.MovieDao
+import com.android.data.source.remote.api.ApiService
 import com.android.domain.repository.MoviesRepository
 import com.android.domain.util.Resource
 import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertNotSame
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mockito
+import org.mockito.Mockito.anyInt
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.verify
 
 @ExperimentalCoroutinesApi
 @HiltAndroidTest
@@ -34,15 +41,18 @@ class MovieRepositoryTest {
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
 
-    private lateinit var apiService: com.android.data.source.remote.api.ApiService
+    private lateinit var apiService: ApiService
+    private lateinit var dao: MovieDao
 
-    private val moviesRepository: MoviesRepository = Mockito.mock()
+    private lateinit var moviesRepository: MoviesRepository
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         MockitoAnnotations.openMocks(this)
         apiService = mock()
+        moviesRepository = MoviesRepositoryImpl(apiService)
+        dao = mock()
     }
 
     @After
@@ -51,45 +61,18 @@ class MovieRepositoryTest {
     }
 
     @Test
-    fun `getMovies should return success`() =
+    fun `getMovies should return success when API call is successful`() =
         testScope.runTest {
-            val movies =
-                listOf(
-                    MovieItem(
-                        overview = "In a galaxy far, far away, the battle between good and evil unfolds as heroes rise to fight for justice and freedom.",
-                        movieId = "123456",
-                        originalLanguage = "en",
-                        originalTitle = "Star Wars: A New Hope",
-                        video = false,
-                        title = "Star Wars",
-                        posterPath = "/path/to/poster.jpg",
-                        backdropPath = "/path/to/backdrop.jpg",
-                        releaseDate = "1977-05-25",
-                        popularity = 88.76,
-                        voteAverage = 8.6,
-                        adult = false,
-                        voteCount = 12000,
-                    ),
-                )
-
-            `when`(moviesRepository.upcomingMovies("en-US/", 1)).thenReturn(
-                Resource.Success(
-                    UpcomingMovieResponse(
-                        results = movies,
-                        dates =
-                            Dates(
-                                maximum = "2024-12-31",
-                                minimum = "2024-01-01",
-                            ),
-                        page = 1,
-                        totalPages = 10,
-                        totalResults = 11,
-                    ),
-                ),
+            `when`(apiService.getUpcoming(anyInt(), eq(Constants.MOVIE_LANG.get))).thenReturn(
+                MockMovieObject.upcomingMovieResponse,
             )
 
-            val resultFlow = moviesRepository.upcomingMovies("en-US/", 1)
-            advanceUntilIdle()
+            val resultFlow =
+                moviesRepository.upcomingMovies(Constants.MOVIE_LANG.get, Pagination.INIT_PAGE.page)
+
+            runCurrent()
+
+            verify(apiService).getUpcoming(anyInt(), eq(Constants.MOVIE_LANG.get))
 
             when (resultFlow) {
                 is Resource.Error -> {
@@ -97,8 +80,79 @@ class MovieRepositoryTest {
                 }
 
                 is Resource.Success -> {
-                    assertEquals(1, resultFlow.data?.results?.size)
+                    assertEquals(Pagination.INIT_PAGE.page, resultFlow.data?.results?.size)
                 }
             }
+        }
+
+    @Test
+    fun `getMovies should return error when API call throw exception`() =
+        testScope.runTest {
+            `when`(apiService.getUpcoming(anyInt(), eq(Constants.MOVIE_LANG.get))).thenThrow(
+                RuntimeException("Network Error"),
+            )
+
+            val resultFlow =
+                moviesRepository.upcomingMovies(Constants.MOVIE_LANG.get, Pagination.INIT_PAGE.page)
+
+            runCurrent()
+
+            verify(apiService).getUpcoming(anyInt(), eq(Constants.MOVIE_LANG.get))
+
+            when (resultFlow) {
+                is Resource.Error -> {
+                    assert(true)
+                    assertEquals("Network Error", resultFlow.message)
+                }
+
+                is Resource.Success -> {
+                    assert(false)
+                }
+            }
+        }
+
+    @Test
+    fun `on database insert called,insert movies method should return success`() =
+        runTest {
+            `when`(dao.insertInMovies(MockMovieObject.movieResponse.results.map { it.toEntityModel() })).thenReturn(
+                listOf(1L),
+            )
+
+            val data =
+                dao.insertInMovies(
+                    listOf(
+                        MockMovieObject.movieResponse.results
+                            .first()
+                            .toEntityModel(),
+                    ),
+                )
+
+            runCurrent()
+
+            assertEquals(Pagination.INIT_PAGE.page, data.size)
+        }
+
+    @Test
+    fun `on database delete data,delete table method should return success`() =
+        runTest {
+            `when`(dao.deleteTable()).thenReturn(Pagination.INIT_PAGE.page)
+
+            val data = dao.deleteTable()
+            runCurrent()
+
+            assertEquals(Pagination.INIT_PAGE.page, data)
+        }
+
+    @Test
+    fun `on getMovieDetail from database called,getMovieDetail method should return correct item`() =
+        runTest {
+            `when`(dao.getMovieDetail(Pagination.INIT_PAGE.page)).thenReturn(
+                MockMovieObject.movieResponse.results
+                    .first()
+                    .toEntityModel(),
+            )
+            val data = dao.getMovieDetail(Pagination.INIT_PAGE.page)
+            runCurrent()
+            assertEquals(Pagination.INIT_PAGE.page, data?.id ?: 0)
         }
 }
