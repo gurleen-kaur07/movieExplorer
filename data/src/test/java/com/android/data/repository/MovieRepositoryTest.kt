@@ -10,8 +10,6 @@ import com.android.data.source.remote.api.ApiService
 import com.android.domain.repository.MoviesRepository
 import com.android.domain.util.Resource
 import dagger.hilt.android.testing.HiltAndroidTest
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertNotSame
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
